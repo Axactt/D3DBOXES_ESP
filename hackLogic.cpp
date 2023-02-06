@@ -49,3 +49,14 @@ bool HackLogic::worldToScreen( Vec3 pos, Vec2& screen )
 	screen.y = -(gameWindowHeight / 2 * NDC.y) + (NDC.y + gameWindowHeight / 2);
 	return true;
 }
+
+Vec3 HackLogic::GetBonePosition( LocalEntity* ent, int boneId )
+{
+	ptrdiff_t bonePtr = ent->m_dwBoneMatrix;
+	Vec3 bonePosition {};
+	bonePosition.x = *(float*) (bonePtr + 0x30 * boneId + 0x0c);
+	bonePosition.y = *(float*) (bonePtr + 0x30 * boneId + 0x1c);
+	bonePosition.z = *(float*) (bonePtr + 0x30 * boneId + 0x2c);
+	return bonePosition;
+
+}

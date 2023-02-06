@@ -26,51 +26,40 @@ void getWindowSize( HWND gamewindow)
 	{
 		gameWindowWidth = rect.right - rect.left;
 		gameWindowHeight = rect.bottom - rect.top;
-
+		// adjustment
+		gameWindowHeight -= 29;
+		gameWindowWidth -= 5;
 	}
 }
 
-/*
-// Drawing lines here by Calling ID3DXLine interface 
- // and D3DXCreateLine function to get address of interface
-void DrawLine( IDirect3DDevice9* pDevice,float x1, float y1, float x2, float y2, float width,bool antialias,D3DCOLOR color )
-{
-	ID3DXLine* pLine {}; // Interface implements line drawing using textured triangles
-	D3DXCreateLine( pDevice, &pLine );
-	D3DXVECTOR2 line[] = { D3DXVECTOR2( x1,y1 ),D3DXVECTOR2( x2,y2 ) };
-	pLine->SetWidth( width );
-	if (antialias)
-		pLine->SetAntialias( 1 );
-	pLine->Begin();
-	pLine->Draw( line, 2, color );
-	pLine->End();
-	pLine->Release();
-}  */
-
-
-
-/*
-//drawing filled rectangle function to be called in hookedEndscene
-void DrawFillRect( IDirect3DDevice9* pDevice, int x, int y, int w, int h, unsigned char r, unsigned char g, unsigned char b )
-{
-	D3DCOLOR rectColor = D3DCOLOR_XRGB( r, g, b );	//No point in using alpha because clear & alpha dont work!
-	D3DRECT BarRect = { x, y, x + w, y + h };
-
-	pDevice->Clear( 1, &BarRect, D3DCLEAR_TARGET | D3DCLEAR_TARGET, rectColor, 0, 0 );
-}     */
 
 // Create our hookFunction having prototype as Endscene
 // used auto alogwith trailing-return type + decltype() to deduce return type of function
 auto  __stdcall hookEndScene( IDirect3DDevice9* pDevice )->decltype(EndScenePtr( pDevice ))
 {
-	//std::cout << " I got hooked. now you can draw.\n";
-	// Do our drawing stuff here
-	// 
-	//random rectangle
-	//DrawFillRect( pDevice, 25, 25, 100, 100,  255, 255, 255 ) ;
+
 
 	 //crosshair
-	  DrawFillRect( pDevice,(gameWindowWidth / 2 - 2), (gameWindowHeight / 2 - 2), 4, 4,255, 255, 255 );
+	 //DrawFillRect( pDevice,(gameWindowWidth / 2 - 2), (gameWindowHeight / 2 - 2), 4, 4,255, 255, 255 );
+
+	hackLogic->crossHair2D.x = gameWindowWidth / 2;
+	hackLogic->crossHair2D.y = gameWindowHeight / 2;
+
+	Vec2 l {};
+	Vec2 r {};
+	Vec2 t {};
+	Vec2 b {};
+
+	l = r = t = b = hackLogic->crossHair2D; // point to representing crosshair
+	l.x -= hackLogic->crossHairSize;
+	r.x += hackLogic->crossHairSize;
+	b.y += hackLogic->crossHairSize;
+	t.y -= hackLogic->crossHairSize;
+
+	DrawLine( pDevice, l, r, 2, false, D3DCOLOR_ARGB( 255, 255, 255, 255) );
+	DrawLine( pDevice, t, b, 2, false, D3DCOLOR_ARGB( 255, 255, 255, 255 ) );
+	
+
 	  // looping for entitties
 	  LocalEntity* nowEntPtr {}; // entity pointer check for all other entities
 	  for (int i = 1; i < 32; ++i)
@@ -212,7 +201,9 @@ DWORD WINAPI MyThreadFunction( HMODULE hinstDLL )
 			// Update function from HackLogic called here
 		// This update function continuously updates the ViewMatrix float values as player camera 
 			hackLogic->Update();
-			//Sleep( 10 );
+			Vec3 punchAngle = hackLogic->localEntity->m_aimPunchAngle;
+			hackLogic->crossHair2D.x = gameWindowWidth / 2 - (gameWindowWidth / 90 * punchAngle.y);  // punchAngle.y is basically yaw value of punchangle
+			hackLogic->crossHair2D.y = gameWindowHeight / 2 - (gameWindowHeight / 90 * punchAngle.x); //pinchAngle.x is basically pitch value of punchangle.
 		}
 		//Here unhook code of Dll starts
 		//Firts original endscene bytes are patched back

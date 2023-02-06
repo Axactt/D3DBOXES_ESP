@@ -102,7 +102,7 @@ public:
 	EntList* entList {};
 	float viewMatrix[16];
 	Vec2 crossHair2D {};  // cross-hair position on gthe screen
-	int crossHairSize {}; // for the size of cross-hair
+	int crossHairSize {4}; // for the size of cross-hair
 	void Init();
 	void Update();
 	bool checkValidEnt( LocalEntity* ent );
