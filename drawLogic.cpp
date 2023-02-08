@@ -3,6 +3,7 @@
 #include <d3d9.h>
 #pragma comment(lib, "d3d9.lib")
 #include <d3dx9.h>
+#include<cmath>
 #include "drawLogic.h"
 #pragma comment(lib, "d3dx9.lib")
 
@@ -16,7 +17,7 @@ void DrawLine( IDirect3DDevice9 * pDevice, float x1, float y1, float x2, float y
 	pLine->SetWidth( width );
 	if (antialias)
 		pLine->SetAntialias( 1 );
-	pLine->Begin();
+	pLine->Begin(); // exception is being thrown here when game is crashing on unhook
 	pLine->Draw( line, 2, color );
 	pLine->End();
 	pLine->Release();
@@ -36,5 +37,29 @@ void DrawLine( IDirect3DDevice9* pDevice, Vec2 src, Vec2 dst, float width, bool 
 {
 
 	DrawLine( pDevice, src.x, src.y, dst.x, dst.y,  width,  antialias,  color );
+
+}
+ // drawing 2d boxes around the entities 
+void DrawEspBox2D( IDirect3DDevice9* pDevice, Vec2 top, Vec2 bottom, int thickness, bool antialias, D3DCOLOR color )
+{
+	int height = std::abs(top.y - bottom.y);
+
+	Vec2 topLeft {};
+	topLeft.x = top.x - height / 4;
+	topLeft.y = top.y;
+	Vec2 topRight {};
+	topRight.x = top.x + height / 4;
+	topRight.y = top.y;
+	Vec2 bottomLeft {};
+	bottomLeft.x = bottom.x - height / 4;
+	bottomLeft.y = bottom.y;
+	Vec2 bottomRight {};
+	bottomRight.x = bottom.x + height / 4;
+	bottomRight.y = bottom.y;
+
+	DrawLine( pDevice, topLeft, topRight, thickness,false, color );
+	DrawLine( pDevice, bottomLeft, bottomRight, thickness, false, color );
+	DrawLine( pDevice, topLeft, bottomLeft, thickness, false, color );
+	DrawLine( pDevice, topRight, bottomRight, thickness, false, color );
 
 }

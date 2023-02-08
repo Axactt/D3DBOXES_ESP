@@ -24,6 +24,11 @@ struct Vec4
 	float w {};
 };
 
+struct Matrix34
+{
+	float m_matrix[3][4] {}; // sIZE OF MATRIX IS EQUIVALENT TO 3(ROWS) X 4(COULMNS)=12 X 4(float byte)= 48 bytes;
+};
+
 class LocalEntity
 {
 
@@ -48,15 +53,20 @@ public:
 		//iHealth
 		char pad3[0x8];
 		int iHealth;// { 0x100 };(0x04)
+
+		//char padz[0x04];
+		//Vec3 m_vecViewOffset;// {0x108}; (0x12)
 		
 		//vecorigin
 		char pad4[0x34];
 		Vec3  vecOrigin; //{ 0x138 };(0x12)
 		
 		// bone_matrix
+		//char pad5[0X255E];
+		//Matrix34 m_dwBoneMatrix; // { 0x26A8 };(0x48)  // use Matrix34 struct here for bone-position of size 4x12(float) bytes
+		// bone_matrix
 		char pad5[0X255E];
-		int m_dwBoneMatrix; // { 0x26A8 };(0x4)
-		
+		int m_dwBoneMatrix; // { 0x26A8 };(0x4) 
 		//aim_punch_angle
 		char pad6[0X990];
 		Vec3 m_aimPunchAngle; //{ 0x303C };(0x12)
@@ -74,7 +84,7 @@ public:
 	//Hence this kind of padding structure is made
 	//So EntListObjPtr class is basically a pointer to local__entity object instance
 	//The extra padding of char[12] bytes is given to represnt structure as in actual game memory
-	struct LocalEntity* entityObjPtr {};
+	LocalEntity* entityObjPtr {};
 	char padding[12];
 };
 class EntList // List of entity pointers to parse up

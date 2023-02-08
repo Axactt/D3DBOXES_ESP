@@ -14,9 +14,10 @@ aliasEndscene  EndScenePtr { nullptr };
 
 // Pointer to our HackLOgic class containing all offsets and 
 // function( like init,update,checkValidEnt,and worldToScreen)
-HackLogic* hackLogic {};
+HackLogic* hackLogic ;
 float gameWindowWidth {};
 float gameWindowHeight {};
+
 
 // Get the size of Gamewindow  
 void getWindowSize( HWND gamewindow)
@@ -38,10 +39,7 @@ void getWindowSize( HWND gamewindow)
 auto  __stdcall hookEndScene( IDirect3DDevice9* pDevice )->decltype(EndScenePtr( pDevice ))
 {
 
-
-	 //crosshair
-	 //DrawFillRect( pDevice,(gameWindowWidth / 2 - 2), (gameWindowHeight / 2 - 2), 4, 4,255, 255, 255 );
-
+	/*Recoil crosshair added with FOV division for base value. Base vale multiplied with yaw and pitch angles to get crosshair position,*/
 	hackLogic->crossHair2D.x = gameWindowWidth / 2;
 	hackLogic->crossHair2D.y = gameWindowHeight / 2;
 
@@ -70,7 +68,7 @@ auto  __stdcall hookEndScene( IDirect3DDevice9* pDevice )->decltype(EndScenePtr(
 //(health,dormant,nullptr) and being self we skip to the for loop end for next entity
 		  if (!(hackLogic->checkValidEnt( nowEntPtr )))
 			  continue; // Skips to for Loop End for next entity
-
+		  std::cout << "[=] nowEntPtr::\t" << nowEntPtr<<"\n";
 			  D3DCOLOR color {};
 			  //Color variable for Team and Enemy after check of entity
 			  if (nowEntPtr->iTeamNum == hackLogic->localEntity->iTeamNum)
@@ -78,11 +76,45 @@ auto  __stdcall hookEndScene( IDirect3DDevice9* pDevice )->decltype(EndScenePtr(
 			  else
 				  color = D3DCOLOR_ARGB( 255, 255, 0, 0 );
 
+			  //getting position of entity and position of entity head
+			 // Vec3 entHeadPos3D = { hackLogic->GetBonePosition( nowEntPtr, 8 ) };// gives head position of entity DO NOT USE BRACES
+			
+			 // auto getBonePosition {  };
+
+			  Vec3 entHeadPos3D = { [=]()
+									{
+										//Lambda function used to get bone -position
+										// Entity pointer cast to integer address and offset added up
+										//Value read from the resulting address which is pointer to Bone-Matrix3x4
+										intptr_t bonePtr = *(intptr_t*) ((intptr_t) nowEntPtr + 0x26A8); 
+										std::cout << "[=]bonePtr::\t" << bonePtr << '\n';
+										Vec3 bonePosition;
+										bonePosition.x = *(float*) (bonePtr + 0x30 * 8 + 0x0C);
+										bonePosition.y = *(float*) (bonePtr + 0x30 * 8 + 0x1C);
+										bonePosition.z = *(float*) (bonePtr + 0x30 * 8 + 0x2C);
+										return bonePosition;
+									 }()};
+
 			  Vec2 entPosition2D {}; // screen cordinates of entity
+			  Vec2 entHeadPos2D {}; // Head position of entity 
+			  
 			  //This is check for worldToscreen presence for each entity(true or false)
 			  if (hackLogic->worldToScreen( nowEntPtr->vecOrigin, entPosition2D ))
-				  //Line drawing goes here if entity is having a scren coordinate
-				 DrawLine( pDevice, entPosition2D.x, entPosition2D.y, gameWindowWidth / 2, gameWindowHeight, 2, false, color );  
+			  {	  //Line drawing goes here if entity is having a scren coordinate
+				DrawLine( pDevice, entPosition2D.x, entPosition2D.y, gameWindowWidth / 2, gameWindowHeight, 2, false, color );
+       
+				// drawing  of 2d boxes here wrt to head position of entity
+	 // here world2screen transform for 3d head position to 2d cordinates
+				if (hackLogic->worldToScreen( entHeadPos3D, entHeadPos2D )) // converts 3d position to 2d position
+				{
+					// entposition2d is the leg position got from m_vecOrigin  
+					//entHeadPos2d is head bone position got from getBoneposition() function
+					DrawEspBox2D( pDevice, entPosition2D, entHeadPos2D, 2, false, color );
+				}
+				
+			  }
+			  // gives head position of entity
+			  
 		  
 		  //return back to original function using EndScenePtr function pointer	  
 	  }
@@ -192,7 +224,7 @@ DWORD WINAPI MyThreadFunction( HMODULE hinstDLL )
 		EndScenePtr = (aliasEndscene) hNP.trampHook<7>( (char*) lpOriginalAddress, (char*) &hookEndScene );
 
 		// new class dynamically created on heap for dRawing Lines logic
-		hackLogic = new HackLogic {};
+		hackLogic = new HackLogic{};
 
 		hackLogic->Init();
 
@@ -211,8 +243,9 @@ DWORD WINAPI MyThreadFunction( HMODULE hinstDLL )
 		hNP.patchByte<7>( (char*) lpOriginalAddress );
 	} // Here the destructor will be called as the hooking class is in lOcal scope  For RA!!
 	// CloseHandle( hinstDLL );
-	delete hackLogic;
-	hackLogic = nullptr;
+
+	// delete hackLogic;
+	/// hackLogic = nullptr;
 	fclose( f );
 	FreeConsole();
 	FreeLibraryAndExitThread( hinstDLL, 0 );

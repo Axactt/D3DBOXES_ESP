@@ -51,12 +51,35 @@ bool HackLogic::worldToScreen( Vec3 pos, Vec2& screen )
 }
 
 Vec3 HackLogic::GetBonePosition( LocalEntity* ent, int boneId )
-{
-	ptrdiff_t bonePtr = ent->m_dwBoneMatrix;
-	Vec3 bonePosition {};
-	bonePosition.x = *(float*) (bonePtr + 0x30 * boneId + 0x0c);
-	bonePosition.y = *(float*) (bonePtr + 0x30 * boneId + 0x1c);
-	bonePosition.z = *(float*) (bonePtr + 0x30 * boneId + 0x2c);
-	return bonePosition;
+ {
+	/*
+	//Matrix34 boneMatrix {};  // a matrix struct of 3x4 size Matrix[3][4]
+	// Dereference added here to get the bone-base as an experiment
+	//intptr_t bonePtr =  (intptr_t)*(intptr_t*)(*(intptr_t*)ent+0x26A8); // 
 
+	DWORD oldProc {};
+	VirtualProtect( &boneMatrix, 48, PAGE_EXECUTE_READWRITE, &oldProc );
+
+	RtlMoveMemory( (char*) &boneMatrix, (char*) (bonePtr+ 0x30 * boneId), 48 );
+
+	VirtualProtect( &boneMatrix, 48, oldProc, &oldProc );
+	  
+	Vec3 bonePosition { boneMatrix.m_matrix[0][3],boneMatrix.m_matrix[1][3],boneMatrix.m_matrix[2][3] };
+
+	//bonePosition.x = *(float*) (bonePtr + 0x30 * boneId + 0x0C);
+	//bonePosition.y = *(float*) (bonePtr + 0x30 * boneId + 0x1C);
+	//bonePosition.z = *(float*) (bonePtr + 0x30 * boneId + 0x2C);  
+	
+	//bonePosition.x = boneMatrix.m_matrix[0][3];
+	//bonePosition.y = boneMatrix.m_matrix[1][3];
+	//bonePosition.z = boneMatrix.m_matrix[2][3];    */
+
+	// ent pointer cast to integer address
+	//offset 0x26a8 added up and the value read from the final integer address
+	intptr_t bonePtr = *(intptr_t*) ((intptr_t) ent + 0x26A8); 
+	Vec3 bonePosition ;
+	bonePosition.x = *(float*) (bonePtr + 0x30 * boneId + 0x0C);
+	bonePosition.y = *(float*) (bonePtr + 0x30 * boneId + 0x1C);
+	bonePosition.z = *(float*) (bonePtr + 0x30 * boneId + 0x2C);  
+	return bonePosition;
 }
